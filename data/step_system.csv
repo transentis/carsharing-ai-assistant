@@ -1,0 +1,24 @@
+Step,System
+Reservation and Booking,Mobile Application Platform
+Vehicle Access and Authentication,Mobile Application Platform
+Trip Monitoring and Management,Mobile Application Platform
+Return and Trip Completion,Mobile Application Platform
+Reservation and Booking,Web-Based Customer Portal
+Vehicle Access and Authentication,Web-Based Customer Portal
+Trip Monitoring and Management,Web-Based Customer Portal
+Return and Trip Completion,Web-Based Customer Portal
+Return and Trip Completion,Web-Based Customer Portal
+Reservation and Booking,Enterprise Resource Planning (ERP) System
+Trip Monitoring and Management,Telematics and Vehicle Connectivity Platform
+Preventive Maintenance Scheduling,Maintenance Management System (MMS)
+Maintenance Execution and Quality Control,Maintenance Management System (MMS)
+Vehicle Cleaning and Preparation,Maintenance Management System (MMS)
+Damage Assessment and Repair Coordination,Maintenance Management System (MMS)
+Damage Assessment and Repair Coordination,Damage Assessment and Claims Management System
+Fleet Rebalancing and Positioning,Fleet Management System (FMS)
+Fleet Rebalancing and Positioning,Field Operations Management System
+Initial Contact and Triage,Customer Relationship Management (CRM) System
+Issue Resolution and Coordination,Customer Relationship Management (CRM) System
+Documentation and Follow-up,Customer Relationship Management (CRM) System
+Escalation and Quality Assurance,Customer Relationship Management (CRM) System
+

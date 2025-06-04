@@ -1,0 +1,20 @@
+Role,Step
+Customer Service Agent,Reservation and Booking
+Fleet Operator,Trip Monitoring and Management
+Mobile App Support Specialist,Reservation and Booking
+Mobile App Support Specialist,Vehicle Access and Authentication
+Mobile App Support Specialist,Return and Trip Completion
+Billing and Revenue Specialist,Return and Trip Completion
+Security and Fraud Analyst,Reservation and Booking
+Security and Fraud Analyst,Trip Monitoring and Management
+Security and Fraud Analyst,Vehicle Access and Authentication
+Security and Fraud Analyst,Return and Trip Completion
+Fleet Maintenance Coordinator,Preventative Maintenance Specialist
+Vehicle Inspector,Maintenance Execution and Quality Control
+Damage Assessment Specialist,Maintenance Execution and Quality Control
+Field Service Technician,Maintenance Execution and Quality Control
+Fleet Rebalancing Specialist,Maintenance Execution and Quality Control
+Maintenance Vendor Manager,Maintenance Execution and Quality Control
+Fleet Data Analyst,Maintenance Execution and Quality Control
+Cleaning and Preparation Staff,Vehicle Cleaning and Preparation
+
