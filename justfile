@@ -7,7 +7,7 @@ default:
 
 # Run the Streamlit app
 run:
-    cd src && streamlit run app.py
+    source venv/bin/activate && cd src && streamlit run app.py
 
 # Install dependencies
 install:

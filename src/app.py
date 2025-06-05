@@ -1,7 +1,6 @@
 import streamlit as st
 from database.neo4j_client import Neo4jClient
 from agent.openai_agent import OpenAIAgent
-from utils.assistant_utils import verify_assistant
 
 def initialize_session_state():
     if "messages" not in st.session_state:
@@ -10,25 +9,21 @@ def initialize_session_state():
         st.session_state.neo4j_client = Neo4jClient()
     if "openai_agent" not in st.session_state:
         st.session_state.openai_agent = OpenAIAgent()
+    if "thread_id" not in st.session_state:
+        st.session_state.thread_id = None
 
 def main():
     st.title("Car Sharing Enterprise Chat Assistant")
     
-    # Verify connection to OpenAI Assistant
-    success, message = verify_assistant()
-    if not success:
-        st.error(f"Error: {message}")
-        st.info("Please update the OPENAI_ASSISTANT_ID in your .env file with your CarSharing Assistant ID")
-        return
-    
-    # Verify connection to Neo4j
+    # Initialize session state and verify connections
     try:
         initialize_session_state()
+        # Test Neo4j connection
         st.session_state.neo4j_client.execute_query("RETURN 1 as test")
         st.success("Connected to OpenAI Assistant and Neo4j database")
     except Exception as e:
-        st.error(f"Error connecting to Neo4j: {str(e)}")
-        st.info("Please check your Neo4j credentials in the .env file")
+        st.error(f"Error connecting to services: {str(e)}")
+        st.info("Please check your API keys and database credentials in the .env file")
         return
     
     # Display chat interface
@@ -39,7 +34,7 @@ def main():
                 st.write(message["content"])
         
         # User input
-        if prompt := st.chat_input("Ask about the car sharing enterprise ..."):
+        if prompt := st.chat_input("Ask about the car sharing enterprise or chat about your data..."):
             # Add user message to chat history
             st.session_state.messages.append({"role": "user", "content": prompt})
             
@@ -47,31 +42,42 @@ def main():
             with st.chat_message("user"):
                 st.write(prompt)
             
-            # Generate response
+            # Generate response using unified chat method
             with st.chat_message("assistant"):
-                with st.spinner("Generating Cypher query..."):
-                    # Generate Cypher query using OpenAI Assistant
-                    cypher_query = st.session_state.openai_agent.generate_cypher_query(prompt)
+                with st.spinner("Processing your request..."):
+                    # Use the new chat method that handles both conversation and database queries
+                    response_data = st.session_state.openai_agent.chat_with_database(
+                        user_message=prompt,
+                        neo4j_client=st.session_state.neo4j_client,
+                        thread_id=st.session_state.thread_id
+                    )
                     
-                    # Show the query (can be commented out in production)
-                    with st.expander("View Cypher Query"):
-                        st.code(cypher_query, language="cypher")
-                
-                with st.spinner("Querying database..."):
-                    # Execute query against Neo4j
-                    result = st.session_state.neo4j_client.execute_query(cypher_query)
+                    # Update thread ID for conversation continuity
+                    st.session_state.thread_id = response_data.get("thread_id")
                     
-                    # Show raw results (can be commented out in production)
-                    with st.expander("View Raw Results"):
-                        st.json(result)
-                
-                with st.spinner("Formatting response..."):
-                    # Format and display response using OpenAI Assistant
-                    response = st.session_state.openai_agent.format_response(prompt, result)
-                    st.write(response)
+                    # Display the assistant's response
+                    assistant_response = response_data.get("message", "I'm sorry, I couldn't process your request.")
+                    st.write(assistant_response)
+                    
+                    # Show executed queries if any
+                    executed_queries = response_data.get("executed_queries", [])
+                    if executed_queries:
+                        with st.expander(f"Database Queries Executed ({len(executed_queries)})"):
+                            for i, query_data in enumerate(executed_queries):
+                                st.write(f"**Query {i+1}:**")
+                                st.code(query_data["query"], language="cypher")
+                                st.write("**Results:**")
+                                st.json(query_data["results"])
+                                if i < len(executed_queries) - 1:
+                                    st.divider()
+                    
+                    # Show error information if there was an issue
+                    if response_data.get("status") == "error":
+                        with st.expander("Error Details"):
+                            st.error(response_data.get("error", "Unknown error occurred"))
             
             # Add assistant response to chat history
-            st.session_state.messages.append({"role": "assistant", "content": response})
+            st.session_state.messages.append({"role": "assistant", "content": assistant_response})
 
 if __name__ == "__main__":
     main()

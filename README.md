@@ -45,35 +45,14 @@ An AI-powered conversational assistant for car sharing services, built with Stre
    streamlit run src/app.py
    ```
 
-## Database Schema
+## Database
 
-The Neo4j database should have the following structure:
+The schema and data for an initial load of the database may be found in the respectivate directories. Loading the data is a manual process.
 
-- **Nodes**:
-  - `User`: Car sharing service users
-  - `Vehicle`: Available vehicles
-  - `Location`: Pickup/dropoff locations
-  - `Booking`: Reservation events
-  - `Trip`: Completed journeys
-
-- **Relationships**:
-  - `(User)-[:BOOKED]->(Booking)`
-  - `(Booking)-[:FOR_VEHICLE]->(Vehicle)`
-  - `(Vehicle)-[:LOCATED_AT]->(Location)`
-  - `(User)-[:COMPLETED]->(Trip)`
-  - `(Trip)-[:USED_VEHICLE]->(Vehicle)`
-
-## Example Queries
-
-The assistant can handle natural language queries like:
-- "Show me available cars near downtown"
-- "What is the most popular car model in our fleet?"
-- "Find all trips longer than 20 miles completed last week"
-- "Which locations have the most vehicle pickups?"
 
 ## How It Works
 
-1. User submits a natural language query about car sharing
+1. User submits a natural language query about the car sharing enterprose
 2. The OpenAI Assistant generates a Cypher query based on the user's question
 3. The application executes the Cypher query against the Neo4j database
 4. Results are passed back to the OpenAI Assistant for formatting
