@@ -30,7 +30,7 @@ class OpenAIAgent:
                 print(f"Error deleting assistant: {e}")
     
     def _load_schema(self):
-        """Load the database schema from the schema directory."""
+        """Load the knowledgegraph schema from the schema directory."""
         schema_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'schema', 'car_sharing_meta_graph.json')
         try:
             with open(schema_path, 'r') as f:
@@ -48,14 +48,14 @@ class OpenAIAgent:
             {
                 "type": "function",
                 "function": {
-                    "name": "query_database",
-                    "description": "Generate a Neo4j Cypher query to retrieve data from the database and then fetch that data from the database",
+                    "name": "query_knowledgegraph",
+                    "description": "Generate a Neo4j Cypher query to retrieve data from the knowledgegraph and then fetch that data from the knowledgegraph",
                     "parameters": {
                         "type": "object",
                         "properties": {
                             "user_question": {
                                 "type": "string",
-                                "description": "The user's question about the car sharing enterprise data"
+                                "description": "The user's question about the car sharing enterprise knowledgegraph data"
                             },
                             "context": {
                                 "type": "string", 
@@ -69,7 +69,7 @@ class OpenAIAgent:
         ]
     
     def _create_or_get_assistant(self):
-        """Create or reuse an OpenAI assistant with database schema and instructions."""
+        """Create or reuse an OpenAI assistant with knowledgegraph schema and instructions."""
         assistant_name = "Car Sharing Enterprise Assistant"
         
         # First, try to find an existing assistant with the same name
@@ -86,9 +86,9 @@ class OpenAIAgent:
         schema = self._load_schema()
         schema_text = json.dumps(schema, indent=2) if schema else "Schema not available"
         
-        instructions = f"""You are a car sharing enterprise assistant that can help with both general conversation and database operations.
+        instructions = f"""You are a car sharing enterprise assistant that can help with both general conversation and knowledgegraph operations.
 
-You have access to a Neo4j database with the following schema:
+You have access to a Neo4j knowledgegraph with the following schema:
 
 node labels and their property keys
 
@@ -110,31 +110,31 @@ node labels and their property keys
         description
 
 relationships
-        department-"is_owner_of"-process
-        process-"consists_of"-step
-        role-"performs"-step
-        system-"supports"-step
+        department-"is_owner_of"->process
+        process-"has_step"->step
+        role-"performs"->step
+        system-"supports"->step
 
         
 Your capabilities include:
 1. **General conversation**: Answer questions, provide explanations, and discuss car sharing enterprise topics
 2. **Generating Cypher Queries**:  When asked to generate a cypher query, follow the guidelines for generating cypher queries outlined below
-3. **Formating data return from the database**: When asked to format data provided in json format, format the results appropriately         
-4. **Database queries**: Use the query_database function when users ask for data from the database. 
+3. **Formating data return from the knowledgegraph**: When asked to format data provided in json format, format the results appropriately         
+4. **Knowledgegraph queries**: Use the query_knowledgegraph function when users ask for data from the knowledgegraph. 
 
 Guidelines for generating cypher queries:
 - The generated queries must respect the schema provided above.        
 - Use proper Neo4j Cypher syntax
 
-When to use the query_database function:
-- User asks for specific information from the database
+When to use the query_knowledgegraph function:
+- User asks for specific information from the knowledgegraph
 
 When to chat normally:
 - User asks for explanations or interpretations
-- User wants to discuss results from database queries
+- User wants to discuss results from knowledgegraph queries
 - User needs help understanding results
 
-Be conversational and helpful. If you're not sure whether to query the database, ask the user for clarification."""
+Be conversational and helpful. If you're not sure whether to query the knowledgegraph, ask the user for clarification."""
 
         function_tools = self._get_function_definitions()
 
@@ -165,7 +165,7 @@ Be conversational and helpful. If you're not sure whether to query the database,
             time.sleep(1)
         raise TimeoutError(f"Run {run_id} did not complete within {timeout} seconds")
     
-    def _handle_query_database(self, arguments,neo4j_client,executed_queries):
+    def _handle_query_knowledgegraph(self, arguments,neo4j_client,executed_queries):
         """Handle the generate_cypher_query function call."""
         user_question = arguments.get("user_question", "")
         context = arguments.get("context", "")
@@ -179,7 +179,7 @@ Be conversational and helpful. If you're not sure whether to query the database,
             query_thread = self.client.beta.threads.create()
             
             # Create a specialized assistant for query generation (or use a simple prompt)
-            query_prompt = f"""Generate a Neo4j Cypher query for the car sharing database that will answer this question: {prompt}
+            query_prompt = f"""Generate a Neo4j Cypher query for the car sharing knowledgegraph that will answer this question: {prompt}
 
 Use the schema defined in the instructions.
 
@@ -226,27 +226,27 @@ Important rules:
                                 
                 return results_summary
             else:
-                raise Exception(f"Database query failed with status: {run.status}")
+                raise Exception(f"Knowledgegraph query failed with status: {run.status}")
                 
         except Exception as e:
-            print(f"Error querying database: {e}")
+            print(f"Error querying knowledgegraph: {e}")
            
             return "No data collected"
     
     def _handle_function_call(self, function_name, arguments,neo4j_client,executed_queries):
         """Route function calls to appropriate handlers."""
-        if function_name == "query_database":
-            return self._handle_query_database(arguments,neo4j_client,executed_queries)
+        if function_name == "query_knowledgegraph":
+            return self._handle_query_knowledgegraph(arguments,neo4j_client,executed_queries)
         else:
             raise ValueError(f"Unknown function: {function_name}")
     
-    def chat_with_database(self, user_message, neo4j_client, thread_id=None):
+    def chat_with_knowledgegraph(self, user_message, neo4j_client, thread_id=None):
         """
-        Enhanced chat method that integrates database operations.
+        Enhanced chat method that integrates knowledgegraph operations.
         
         Args:
             user_message (str): The user's message
-            neo4j_client: Neo4j client instance for executing queries
+            neo4j_client: Neo4j client instance for executing knowledgegraph queries
             thread_id (str, optional): Existing thread ID to continue conversation
             
         Returns:
@@ -329,7 +329,7 @@ Important rules:
             }
             
         except Exception as e:
-            print(f"Error in chat_with_database: {e}")
+            print(f"Error in chat_with_knowledgegraph: {e}")
             return {
                 "message": "I'm sorry, I encountered an error processing your request. Please try again.",
                 "thread_id": thread_id,

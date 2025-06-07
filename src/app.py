@@ -20,10 +20,10 @@ def main():
         initialize_session_state()
         # Test Neo4j connection
         st.session_state.neo4j_client.execute_query("RETURN 1 as test")
-        st.success("Connected to OpenAI Assistant and Neo4j database")
+        st.success("Connected to OpenAI Assistant and Neo4j knowledgegraph")
     except Exception as e:
         st.error(f"Error connecting to services: {str(e)}")
-        st.info("Please check your API keys and database credentials in the .env file")
+        st.info("Please check your API keys and knowledgegraph credentials in the .env file")
         return
     
     # Display chat interface
@@ -45,8 +45,8 @@ def main():
             # Generate response using unified chat method
             with st.chat_message("assistant"):
                 with st.spinner("Processing your request..."):
-                    # Use the new chat method that handles both conversation and database queries
-                    response_data = st.session_state.openai_agent.chat_with_database(
+                    # Use the new chat method that handles both conversation and knowledgegraph queries
+                    response_data = st.session_state.openai_agent.chat_with_knowledgegraph(
                         user_message=prompt,
                         neo4j_client=st.session_state.neo4j_client,
                         thread_id=st.session_state.thread_id
@@ -62,7 +62,7 @@ def main():
                     # Show executed queries if any
                     executed_queries = response_data.get("executed_queries", [])
                     if executed_queries:
-                        with st.expander(f"Database Queries Executed ({len(executed_queries)})"):
+                        with st.expander(f"Knowledgegraph Queries Executed ({len(executed_queries)})"):
                             for i, query_data in enumerate(executed_queries):
                                 st.write(f"**Query {i+1}:**")
                                 st.code(query_data["query"], language="cypher")
