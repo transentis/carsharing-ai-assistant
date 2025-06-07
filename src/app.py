@@ -28,9 +28,65 @@ def main():
         return
     
     # Display chat messages
-    for message in st.session_state.messages:
+    for i, message in enumerate(st.session_state.messages):
         with st.chat_message(message["role"]):
             st.write(message["content"])
+            
+            # Show executed queries and reports for assistant messages
+            if message["role"] == "assistant":
+                # Show executed queries if any
+                executed_queries = message.get("executed_queries", [])
+                if executed_queries:
+                    with st.expander(f"Knowledgegraph Queries Executed ({len(executed_queries)})"):
+                        for j, query_data in enumerate(executed_queries):
+                            st.write(f"**Query {j+1}:**")
+                            st.code(query_data["query"], language="cypher")
+                            st.write("**Results:**")
+                            st.json(query_data["results"])
+                            if j < len(executed_queries) - 1:
+                                st.divider()
+                
+                # Show generated reports if any
+                generated_reports = message.get("generated_reports", [])
+                if generated_reports:
+                    with st.expander(f"Generated Reports ({len(generated_reports)})"):
+                        for j, report in enumerate(generated_reports):
+                            st.write(f"**Report {j+1}: {report.get('title', 'Untitled Report')}**")
+                            st.write(f"Records analyzed: {report.get('records_count', 0)}")
+                            
+                            col1, col2 = st.columns(2)
+                            
+                            # Download Typst file
+                            if 'typst_file' in report and os.path.exists(report['typst_file']):
+                                with col1:
+                                    with open(report['typst_file'], 'r') as f:
+                                        typst_content = f.read()
+                                    st.download_button(
+                                        label="📄 Download Typst Source",
+                                        data=typst_content,
+                                        file_name=f"report_{i}_{j+1}.typ",
+                                        mime="text/plain",
+                                        key=f"typst_{i}_{j}"
+                                    )
+                            
+                            # Download PDF file
+                            if 'pdf_file' in report and os.path.exists(report['pdf_file']):
+                                with col2:
+                                    with open(report['pdf_file'], 'rb') as f:
+                                        pdf_content = f.read()
+                                    st.download_button(
+                                        label="📋 Download PDF Report",
+                                        data=pdf_content,
+                                        file_name=f"report_{i}_{j+1}.pdf",
+                                        mime="application/pdf",
+                                        key=f"pdf_{i}_{j}"
+                                    )
+                            
+                            if 'error' in report:
+                                st.error(f"Error generating report: {report['error']}")
+                            
+                            if j < len(generated_reports) - 1:
+                                st.divider()
     
     # User input - always at the bottom
     if prompt := st.chat_input("Ask about your knowledgegraph data or chat about enterprise processes..."):
@@ -53,22 +109,19 @@ def main():
             # Update thread ID for conversation continuity
             st.session_state.thread_id = response_data.get("thread_id")
             
-            # Get the assistant's response
+            # Get the assistant's response and metadata
             assistant_response = response_data.get("message", "I'm sorry, I couldn't process your request.")
-            
-            # Add assistant response to chat history
-            st.session_state.messages.append({"role": "assistant", "content": assistant_response})
-            
-            # Store executed queries and errors for display
             executed_queries = response_data.get("executed_queries", [])
-            if executed_queries:
-                st.session_state.last_executed_queries = executed_queries
-            
-            # Check for generated reports
             generated_reports = response_data.get("generated_reports", [])
-            print(f"DEBUG: Generated reports received: {generated_reports}")
-            if generated_reports:
-                st.session_state.last_generated_reports = generated_reports
+            
+            # Add assistant response to chat history with metadata
+            message_data = {
+                "role": "assistant", 
+                "content": assistant_response,
+                "executed_queries": executed_queries,
+                "generated_reports": generated_reports
+            }
+            st.session_state.messages.append(message_data)
             
             if response_data.get("status") == "error":
                 st.session_state.last_error = response_data.get("error", "Unknown error occurred")
@@ -76,61 +129,7 @@ def main():
         # Rerun to refresh the display with new messages
         st.rerun()
     
-    # Display executed queries and errors after the chat messages (if any from the last interaction)
-    if hasattr(st.session_state, 'last_executed_queries') and st.session_state.last_executed_queries:
-        with st.expander(f"Knowledgegraph Queries Executed ({len(st.session_state.last_executed_queries)})"):
-            for i, query_data in enumerate(st.session_state.last_executed_queries):
-                st.write(f"**Query {i+1}:**")
-                st.code(query_data["query"], language="cypher")
-                st.write("**Results:**")
-                st.json(query_data["results"])
-                if i < len(st.session_state.last_executed_queries) - 1:
-                    st.divider()
-        # Clear after displaying
-        st.session_state.last_executed_queries = []
-    
-    # Display generated reports (if any from the last interaction)
-    if hasattr(st.session_state, 'last_generated_reports') and st.session_state.last_generated_reports:
-        with st.expander(f"Generated Reports ({len(st.session_state.last_generated_reports)})"):
-            for i, report in enumerate(st.session_state.last_generated_reports):
-                st.write(f"**Report {i+1}: {report.get('title', 'Untitled Report')}**")
-                st.write(f"Records analyzed: {report.get('records_count', 0)}")
-                
-                col1, col2 = st.columns(2)
-                
-                # Download Typst file
-                if 'typst_file' in report and os.path.exists(report['typst_file']):
-                    with col1:
-                        with open(report['typst_file'], 'r') as f:
-                            typst_content = f.read()
-                        st.download_button(
-                            label="📄 Download Typst Source",
-                            data=typst_content,
-                            file_name=f"report_{i+1}.typ",
-                            mime="text/plain"
-                        )
-                
-                # Download PDF file
-                if 'pdf_file' in report and os.path.exists(report['pdf_file']):
-                    with col2:
-                        with open(report['pdf_file'], 'rb') as f:
-                            pdf_content = f.read()
-                        st.download_button(
-                            label="📋 Download PDF Report",
-                            data=pdf_content,
-                            file_name=f"report_{i+1}.pdf",
-                            mime="application/pdf"
-                        )
-                
-                if 'error' in report:
-                    st.error(f"Error generating report: {report['error']}")
-                
-                if i < len(st.session_state.last_generated_reports) - 1:
-                    st.divider()
-        
-        # Clear after displaying
-        st.session_state.last_generated_reports = []
-    
+    # Display errors if any
     if hasattr(st.session_state, 'last_error') and st.session_state.last_error:
         with st.expander("Error Details"):
             st.error(st.session_state.last_error)
