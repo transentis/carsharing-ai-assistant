@@ -70,7 +70,7 @@ class OpenAIAgent:
     
     def _create_or_get_assistant(self):
         """Create or reuse an OpenAI assistant with knowledgegraph schema and instructions."""
-        assistant_name = "Car Sharing Enterprise Assistant"
+        assistant_name = "Knowledgegraph AI Assistant"
         
         # First, try to find an existing assistant with the same name
         try:
@@ -86,7 +86,7 @@ class OpenAIAgent:
         schema = self._load_schema()
         schema_text = json.dumps(schema, indent=2) if schema else "Schema not available"
         
-        instructions = f"""You are a car sharing enterprise assistant that can help with both general conversation and knowledgegraph operations.
+        instructions = f"""You are a knowledgegraph AI assistant that can help with both general conversation and knowledgegraph operations.
 
 You have access to a Neo4j knowledgegraph with the following schema:
 
@@ -117,7 +117,7 @@ relationships
 
         
 Your capabilities include:
-1. **General conversation**: Answer questions, provide explanations, and discuss car sharing enterprise topics
+1. **General conversation**: Answer questions, provide explanations, and discuss enterprise process topics
 2. **Generating Cypher Queries**:  When asked to generate a cypher query, follow the guidelines for generating cypher queries outlined below
 3. **Formating data return from the knowledgegraph**: When asked to format data provided in json format, format the results appropriately         
 4. **Knowledgegraph queries**: Use the query_knowledgegraph function when users ask for data from the knowledgegraph. 

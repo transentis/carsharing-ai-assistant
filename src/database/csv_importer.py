@@ -2,7 +2,7 @@ import os
 from .neo4j_client import Neo4jClient
 
 class CSVImporter:
-    def __init__(self, github_repo="transentis/carsharing-ai-assistant", branch="main"):
+    def __init__(self, github_repo="transentis/knowledgegraph-ai-assistant", branch="main"):
         self.client = Neo4jClient()
         self.github_repo = github_repo
         self.branch = branch

@@ -13,7 +13,7 @@ def initialize_session_state():
         st.session_state.thread_id = None
 
 def main():
-    st.title("Car Sharing Enterprise Chat Assistant")
+    st.title("Knowledgegraph AI Assistant")
     
     # Initialize session state and verify connections
     try:
@@ -34,7 +34,7 @@ def main():
                 st.write(message["content"])
         
         # User input
-        if prompt := st.chat_input("Ask about the car sharing enterprise or chat about your data..."):
+        if prompt := st.chat_input("Ask about your knowledgegraph data or chat about enterprise processes..."):
             # Add user message to chat history
             st.session_state.messages.append({"role": "user", "content": prompt})
             

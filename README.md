@@ -1,20 +1,20 @@
-# CarSharing AI Assistant
+# Knowledgegraph AI Assistant
 
-An AI-powered conversational assistant for car sharing services, built with Streamlit and integrated with Neo4j and OpenAI.
+An AI-powered conversational assistant for enterprise process knowledgegraphs, built with Streamlit and integrated with Neo4j and OpenAI.
 
 ## Features
 
 - Natural language conversational interface
 - Custom OpenAI Assistant for generating Cypher queries
-- Neo4j database integration for car sharing data
+- Neo4j knowledgegraph integration for enterprise process data
 - Streamlit web interface with interactive chat
 
 ## Setup
 
 1. Clone the repository:
    ```
-   git clone https://github.com/yourusername/carsharing-ai-assistant.git
-   cd carsharing-ai-assistant
+   git clone https://github.com/transentis/knowledgegraph-ai-assistant.git
+   cd knowledgegraph-ai-assistant
    ```
 
 2. Create and activate a virtual environment:
@@ -51,7 +51,7 @@ To import the CSV data into your Neo4j AuraDB:
 just import-data
 ```
 
-This will load all the carsharing process data including departments, processes, systems, roles, and their relationships from the current repository.
+This will load all the enterprise process data including departments, processes, systems, roles, and their relationships from the current repository.
 
 You can also specify a different repository or branch:
 
@@ -108,7 +108,7 @@ ORDER BY s.step
 
 ## How It Works
 
-1. User submits a natural language query about the car sharing enterprose
+1. User submits a natural language query about their enterprise processes
 2. The OpenAI Assistant generates a Cypher query based on the user's question
 3. The application executes the Cypher query against the Neo4j database
 4. Results are passed back to the OpenAI Assistant for formatting

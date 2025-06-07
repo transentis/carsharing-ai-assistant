@@ -10,8 +10,8 @@ def main():
     parser = argparse.ArgumentParser(description="Import CSV data into Neo4j AuraDB")
     parser.add_argument(
         "--repo", 
-        default="transentis/carsharing-ai-assistant",
-        help="GitHub repository in format 'owner/repo' (default: transentis/carsharing-ai-assistant)"
+        default="transentis/knowledgegraph-ai-assistant",
+        help="GitHub repository in format 'owner/repo' (default: transentis/knowledgegraph-ai-assistant)"
     )
     parser.add_argument(
         "--branch",
