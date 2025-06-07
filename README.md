@@ -168,6 +168,17 @@ For report generation:
 3. A professional PDF report is generated and made available for download
 4. Both the source Typst file and compiled PDF are provided
 
+## Example Report Prompts
+
+Try these prompts to generate professional reports from your knowledgegraph:
+
+- "Generate a report on all departments and their processes"
+- "Create a document showing which systems support each process step"
+- "I need a formatted summary of all roles and their responsibilities"
+- "Generate a report about all processes and their departments"
+- "Create a document listing all systems that support the 'Car Rental' process"
+- "I want a report showing the complete workflow for each process"
+
 ## Troubleshooting
 
 - If you see an error connecting to the OpenAI Assistant, make sure your Assistant ID is correct
