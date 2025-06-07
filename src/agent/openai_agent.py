@@ -279,6 +279,8 @@ Important rules:
                 # Return both query and results to the assistant
                 results_summary = f"Query executed: {cypher_query}\n\nResults: {json.dumps(query_results, indent=2)}"
                 
+                # For report generation, we need to track the raw results separately
+                self._last_query_results = query_results
                                 
                 return results_summary
             else:
@@ -300,15 +302,11 @@ Important rules:
             query_args = {"user_question": user_question, "context": context}
             data_result = self._handle_query_knowledgegraph(query_args, neo4j_client, executed_queries)
             
-            # Parse the JSON data from the query result
-            try:
-                if isinstance(data_result, str):
-                    data = json.loads(data_result)
-                else:
-                    data = data_result
-            except json.JSONDecodeError:
-                data = []
-                print(f"Could not parse query result as JSON: {data_result}")
+            # Get the actual query results from the cached data
+            data = getattr(self, '_last_query_results', [])
+            
+            print(f"DEBUG: Using cached query results: {data}")
+            print(f"DEBUG: Data length: {len(data) if data else 0}")
             
             # Generate the report
             typst_file, pdf_file = self.report_generator.generate_report(
@@ -329,7 +327,10 @@ Important rules:
                 "records_count": len(data) if data else 0
             }
             
-            return json.dumps(result)
+            # Return a user-friendly message to the assistant instead of file paths
+            user_message = f"✅ Report '{report_title}' has been generated successfully with {len(data) if data else 0} records. The report files are now available for download in the interface below."
+            
+            return user_message, result
             
         except Exception as e:
             print(f"Error generating report: {e}")
@@ -337,22 +338,20 @@ Important rules:
                 "error": str(e),
                 "title": report_title
             }
-            return json.dumps(error_result)
+            error_message = f"❌ Failed to generate report '{report_title}': {str(e)}"
+            return error_message, error_result
     
     def _handle_function_call(self, function_name, arguments, neo4j_client, executed_queries, generated_reports=None):
         """Route function calls to appropriate handlers."""
         if function_name == "query_knowledgegraph":
             return self._handle_query_knowledgegraph(arguments,neo4j_client,executed_queries)
         elif function_name == "generate_report":
-            result = self._handle_generate_report(arguments,neo4j_client,executed_queries)
+            result, report_data = self._handle_generate_report(arguments,neo4j_client,executed_queries)
             # Track generated reports
-            if generated_reports is not None:
-                try:
-                    report_data = json.loads(result)
-                    if "error" not in report_data:
-                        generated_reports.append(report_data)
-                except json.JSONDecodeError:
-                    pass
+            if generated_reports is not None and report_data:
+                if "error" not in report_data:
+                    print(f"DEBUG: Adding report data to generated_reports: {report_data}")
+                    generated_reports.append(report_data)
             return result
         else:
             raise ValueError(f"Unknown function: {function_name}")

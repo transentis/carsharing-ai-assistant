@@ -62,6 +62,7 @@ def main():
             
             # Check for generated reports
             generated_reports = response_data.get("generated_reports", [])
+            print(f"DEBUG: Generated reports received: {generated_reports}")
             if generated_reports:
                 st.session_state.last_generated_reports = generated_reports
             
