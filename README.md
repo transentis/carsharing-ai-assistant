@@ -28,13 +28,29 @@ An AI-powered conversational assistant for enterprise process knowledgegraphs, b
    pip install -r requirements.txt
    ```
 
-4. Configure environment variables:
+4. Install Just (command runner):
+   ```bash
+   # On macOS
+   brew install just
+   
+   # On Linux
+   curl --proto '=https' --tlsv1.2 -sSf https://just.systems/install.sh | bash -s -- --to ~/bin
+   
+   # On Windows
+   scoop install just
+   # or
+   cargo install just
+   ```
+   
+   Alternatively, you can run commands directly with Python instead of using `just`.
+
+5. Configure environment variables:
    - Copy `src/.env-example` to `src/.env`
    - Update with your Neo4j Aura credentials
    - Add your OpenAI API key
    - The OpenAI Assistant will be created automatically when the app starts
 
-5. Run the application:
+6. Run the application:
    ```
    streamlit run src/app.py
    ```
@@ -47,16 +63,27 @@ The schema and data for an initial load of the database may be found in the data
 
 To import the CSV data into your Neo4j AuraDB:
 
+**Using Just:**
 ```bash
 just import-data
+```
+
+**Or directly with Python:**
+```bash
+python import_data.py
 ```
 
 This will load all the enterprise process data including departments, processes, systems, roles, and their relationships from the current repository.
 
 You can also specify a different repository or branch:
 
+**Using Just:**
 ```bash
 just import-data "your-username/your-fork"
+```
+
+**Or directly with Python:**
+```bash
 python import_data.py --repo "your-username/your-fork" --branch "development"
 ```
 
