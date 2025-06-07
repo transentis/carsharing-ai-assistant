@@ -3,12 +3,27 @@
 Script to import CSV data into Neo4j AuraDB
 """
 
+import argparse
 from src.database.csv_importer import CSVImporter
 
 def main():
-    print("Starting CSV data import to Neo4j...")
+    parser = argparse.ArgumentParser(description="Import CSV data into Neo4j AuraDB")
+    parser.add_argument(
+        "--repo", 
+        default="transentis/carsharing-ai-assistant",
+        help="GitHub repository in format 'owner/repo' (default: transentis/carsharing-ai-assistant)"
+    )
+    parser.add_argument(
+        "--branch",
+        default="main", 
+        help="Git branch to import from (default: main)"
+    )
     
-    importer = CSVImporter()
+    args = parser.parse_args()
+    
+    print(f"Starting CSV data import to Neo4j from {args.repo}...")
+    
+    importer = CSVImporter(github_repo=args.repo, branch=args.branch)
     
     try:
         importer.import_all_data()

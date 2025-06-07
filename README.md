@@ -51,7 +51,14 @@ To import the CSV data into your Neo4j AuraDB:
 just import-data
 ```
 
-This will load all the carsharing process data including departments, processes, systems, roles, and their relationships.
+This will load all the carsharing process data including departments, processes, systems, roles, and their relationships from the current repository.
+
+You can also specify a different repository or branch:
+
+```bash
+just import-data "your-username/your-fork"
+python import_data.py --repo "your-username/your-fork" --branch "development"
+```
 
 ### Cypher Query Examples
 

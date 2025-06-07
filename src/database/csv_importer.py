@@ -2,8 +2,11 @@ import os
 from .neo4j_client import Neo4jClient
 
 class CSVImporter:
-    def __init__(self):
+    def __init__(self, github_repo="transentis/carsharing-ai-assistant", branch="main"):
         self.client = Neo4jClient()
+        self.github_repo = github_repo
+        self.branch = branch
+        self.base_url = f"https://raw.githubusercontent.com/{github_repo}/{branch}/data"
         self.data_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'data')
     
     def import_all_data(self):
@@ -69,7 +72,7 @@ class CSVImporter:
     
     def import_departments(self):
         """Import departments from CSV"""
-        file_path = "https://raw.githubusercontent.com/transentis/carsharing-ai-assistant/main/data/department.csv"
+        file_path = f"{self.base_url}/department.csv"
         query = f"""
         LOAD CSV WITH HEADERS FROM '{file_path}' AS row
         CREATE (d:department {{
@@ -86,7 +89,7 @@ class CSVImporter:
     
     def import_processes(self):
         """Import processes from CSV"""
-        file_path = "https://raw.githubusercontent.com/transentis/carsharing-ai-assistant/main/data/process.csv"
+        file_path = f"{self.base_url}/process.csv"
         query = f"""
         LOAD CSV WITH HEADERS FROM '{file_path}' AS row
         CREATE (p:process {{
@@ -103,7 +106,7 @@ class CSVImporter:
     
     def import_systems(self):
         """Import systems from CSV"""
-        file_path = "https://raw.githubusercontent.com/transentis/carsharing-ai-assistant/main/data/system.csv"
+        file_path = f"{self.base_url}/system.csv"
         query = f"""
         LOAD CSV WITH HEADERS FROM '{file_path}' AS row
         CREATE (s:system {{
@@ -121,7 +124,7 @@ class CSVImporter:
     
     def import_roles(self):
         """Import roles from CSV"""
-        file_path = "https://raw.githubusercontent.com/transentis/carsharing-ai-assistant/main/data/role.csv"
+        file_path = f"{self.base_url}/role.csv"
         query = f"""
         LOAD CSV WITH HEADERS FROM '{file_path}' AS row
         CREATE (r:role {{
@@ -138,7 +141,7 @@ class CSVImporter:
     
     def import_steps(self):
         """Import process steps from CSV"""
-        file_path = "https://raw.githubusercontent.com/transentis/carsharing-ai-assistant/main/data/process_step.csv"
+        file_path = f"{self.base_url}/process_step.csv"
         query = f"""
         LOAD CSV WITH HEADERS FROM '{file_path}' AS row
         CREATE (st:step {{
@@ -157,7 +160,7 @@ class CSVImporter:
     
     def import_process_department_relationships(self):
         """Import process-department relationships"""
-        file_path = "https://raw.githubusercontent.com/transentis/carsharing-ai-assistant/main/data/process_department.csv"
+        file_path = f"{self.base_url}/process_department.csv"
         query = f"""
         LOAD CSV WITH HEADERS FROM '{file_path}' AS row
         MATCH (p:process {{name: row.Process}})
@@ -173,7 +176,7 @@ class CSVImporter:
     
     def import_process_step_relationships(self):
         """Import process-step relationships"""
-        file_path = "https://raw.githubusercontent.com/transentis/carsharing-ai-assistant/main/data/process_step.csv"
+        file_path = f"{self.base_url}/process_step.csv"
         query = f"""
         LOAD CSV WITH HEADERS FROM '{file_path}' AS row
         MATCH (p:process {{name: row.Process}})
@@ -189,7 +192,7 @@ class CSVImporter:
     
     def import_role_step_relationships(self):
         """Import role-step relationships"""
-        file_path = "https://raw.githubusercontent.com/transentis/carsharing-ai-assistant/main/data/role_step.csv"
+        file_path = f"{self.base_url}/role_step.csv"
         query = f"""
         LOAD CSV WITH HEADERS FROM '{file_path}' AS row
         MATCH (r:role {{name: row.Role}})
@@ -205,7 +208,7 @@ class CSVImporter:
     
     def import_step_system_relationships(self):
         """Import step-system relationships"""
-        file_path = "https://raw.githubusercontent.com/transentis/carsharing-ai-assistant/main/data/step_system.csv"
+        file_path = f"{self.base_url}/step_system.csv"
         query = f"""
         LOAD CSV WITH HEADERS FROM '{file_path}' AS row
         MATCH (st:step {{step: row.Step}})
