@@ -12,6 +12,7 @@ Most of the code was written by Claude Code, with a little prompting from Oliver
 - Custom OpenAI Assistant for generating Cypher queries
 - Neo4j knowledgegraph integration for enterprise process data
 - Streamlit web interface with interactive chat
+- **Report generation**: Generate professional PDF reports from knowledgegraph data using Typst markup language
 
 ## Setup
 
@@ -48,13 +49,29 @@ Most of the code was written by Claude Code, with a little prompting from Oliver
    
    Alternatively, you can run commands directly with Python instead of using `just`.
 
-5. Configure environment variables:
+5. Install Typst (for report generation):
+   ```bash
+   # On macOS
+   brew install typst
+   
+   # On Linux
+   curl -fsSL https://typst.community/typst-install/install.sh | sh
+   
+   # On Windows
+   winget install --id Typst.Typst
+   # or
+   cargo install --git https://github.com/typst/typst --locked typst-cli
+   ```
+   
+   Note: Typst is required only if you want to generate PDF reports. The assistant will work without it for regular queries.
+
+6. Configure environment variables:
    - Copy `src/.env-example` to `src/.env`
    - Update with your Neo4j Aura credentials
    - Add your OpenAI API key
    - The OpenAI Assistant will be created automatically when the app starts
 
-6. Run the application:
+7. Run the application:
    ```
    streamlit run src/app.py
    ```
@@ -141,9 +158,15 @@ ORDER BY s.step
 
 1. User submits a natural language query about their enterprise processes
 2. The OpenAI Assistant generates a Cypher query based on the user's question
-3. The application executes the Cypher query against the Neo4j database
+3. The application executes the Cypher query against the Neo4j knowledgegraph
 4. Results are passed back to the OpenAI Assistant for formatting
 5. The formatted response is displayed to the user
+
+For report generation:
+1. User asks for a "report" or "document" about specific data
+2. The assistant queries the knowledgegraph and formats results using Typst markup
+3. A professional PDF report is generated and made available for download
+4. Both the source Typst file and compiled PDF are provided
 
 ## Troubleshooting
 

@@ -1,3 +1,4 @@
+import os
 import streamlit as st
 from database.neo4j_client import Neo4jClient
 from agent.openai_agent import OpenAIAgent
@@ -59,6 +60,11 @@ def main():
             if executed_queries:
                 st.session_state.last_executed_queries = executed_queries
             
+            # Check for generated reports
+            generated_reports = response_data.get("generated_reports", [])
+            if generated_reports:
+                st.session_state.last_generated_reports = generated_reports
+            
             if response_data.get("status") == "error":
                 st.session_state.last_error = response_data.get("error", "Unknown error occurred")
         
@@ -77,6 +83,48 @@ def main():
                     st.divider()
         # Clear after displaying
         st.session_state.last_executed_queries = []
+    
+    # Display generated reports (if any from the last interaction)
+    if hasattr(st.session_state, 'last_generated_reports') and st.session_state.last_generated_reports:
+        with st.expander(f"Generated Reports ({len(st.session_state.last_generated_reports)})"):
+            for i, report in enumerate(st.session_state.last_generated_reports):
+                st.write(f"**Report {i+1}: {report.get('title', 'Untitled Report')}**")
+                st.write(f"Records analyzed: {report.get('records_count', 0)}")
+                
+                col1, col2 = st.columns(2)
+                
+                # Download Typst file
+                if 'typst_file' in report and os.path.exists(report['typst_file']):
+                    with col1:
+                        with open(report['typst_file'], 'r') as f:
+                            typst_content = f.read()
+                        st.download_button(
+                            label="📄 Download Typst Source",
+                            data=typst_content,
+                            file_name=f"report_{i+1}.typ",
+                            mime="text/plain"
+                        )
+                
+                # Download PDF file
+                if 'pdf_file' in report and os.path.exists(report['pdf_file']):
+                    with col2:
+                        with open(report['pdf_file'], 'rb') as f:
+                            pdf_content = f.read()
+                        st.download_button(
+                            label="📋 Download PDF Report",
+                            data=pdf_content,
+                            file_name=f"report_{i+1}.pdf",
+                            mime="application/pdf"
+                        )
+                
+                if 'error' in report:
+                    st.error(f"Error generating report: {report['error']}")
+                
+                if i < len(st.session_state.last_generated_reports) - 1:
+                    st.divider()
+        
+        # Clear after displaying
+        st.session_state.last_generated_reports = []
     
     if hasattr(st.session_state, 'last_error') and st.session_state.last_error:
         with st.expander("Error Details"):

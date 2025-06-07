@@ -1,8 +1,12 @@
 import os
 import json
 import time
+import signal
+import atexit
+import threading
 from openai import OpenAI
 from dotenv import load_dotenv
+from utils.report_generator import TypstReportGenerator
 
 class OpenAIAgent:
     def __init__(self, cleanup_on_exit=True):
@@ -11,7 +15,21 @@ class OpenAIAgent:
         self.api_key = os.getenv("OPENAI_API_KEY")
         self.client = OpenAI(api_key=self.api_key)
         self.cleanup_on_exit = cleanup_on_exit
+        self.report_generator = TypstReportGenerator()
         self.assistant = self._create_or_get_assistant()
+        
+        # Register cleanup handlers for various exit scenarios
+        if cleanup_on_exit:
+            atexit.register(self.cleanup_assistant)
+            # Only register signal handlers if we're in the main thread
+            try:
+                if threading.current_thread() is threading.main_thread():
+                    signal.signal(signal.SIGINT, self._signal_handler)
+                    signal.signal(signal.SIGTERM, self._signal_handler)
+            except ValueError:
+                # Signal handlers can't be registered in non-main threads
+                # This is expected in Streamlit and other threading environments
+                pass
     
     def __enter__(self):
         return self
@@ -20,12 +38,19 @@ class OpenAIAgent:
         if self.cleanup_on_exit:
             self.cleanup_assistant()
     
+    def _signal_handler(self, signum, frame):
+        """Handle SIGINT (Ctrl-C) and SIGTERM signals to cleanup before exit."""
+        print(f"\nReceived signal {signum}, cleaning up assistant...")
+        self.cleanup_assistant()
+        exit(0)
+    
     def cleanup_assistant(self):
         """Delete the assistant to avoid accumulating unused assistants."""
         if hasattr(self, 'assistant') and self.assistant:
             try:
                 self.client.beta.assistants.delete(assistant_id=self.assistant.id)
                 print(f"Deleted assistant with ID: {self.assistant.id}")
+                self.assistant = None  # Prevent multiple deletion attempts
             except Exception as e:
                 print(f"Error deleting assistant: {e}")
     
@@ -55,7 +80,7 @@ class OpenAIAgent:
                         "properties": {
                             "user_question": {
                                 "type": "string",
-                                "description": "The user's question about the car sharing enterprise knowledgegraph data"
+                                "description": "The user's question about the enterprise knowledgegraph data"
                             },
                             "context": {
                                 "type": "string", 
@@ -63,6 +88,31 @@ class OpenAIAgent:
                             }
                         },
                         "required": ["user_question"]
+                    }
+                }
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "generate_report",
+                    "description": "Generate a formatted report from knowledgegraph data using Typst markup language and compile it to PDF",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "report_title": {
+                                "type": "string",
+                                "description": "Title for the report"
+                            },
+                            "user_question": {
+                                "type": "string",
+                                "description": "The user's question about what report they want"
+                            },
+                            "context": {
+                                "type": "string",
+                                "description": "Additional context about the report requirements"
+                            }
+                        },
+                        "required": ["report_title", "user_question"]
                     }
                 }
             }
@@ -120,7 +170,8 @@ Your capabilities include:
 1. **General conversation**: Answer questions, provide explanations, and discuss enterprise process topics
 2. **Generating Cypher Queries**:  When asked to generate a cypher query, follow the guidelines for generating cypher queries outlined below
 3. **Formating data return from the knowledgegraph**: When asked to format data provided in json format, format the results appropriately         
-4. **Knowledgegraph queries**: Use the query_knowledgegraph function when users ask for data from the knowledgegraph. 
+4. **Knowledgegraph queries**: Use the query_knowledgegraph function when users ask for data from the knowledgegraph.
+5. **Report generation**: Use the generate_report function when users ask for reports, documents, or formatted output from the knowledgegraph data. 
 
 Guidelines for generating cypher queries:
 - The generated queries must respect the schema provided above.        
@@ -129,12 +180,17 @@ Guidelines for generating cypher queries:
 When to use the query_knowledgegraph function:
 - User asks for specific information from the knowledgegraph
 
+When to use the generate_report function:
+- User asks for a "report", "document", "summary report", or "formatted output"
+- User wants data exported or formatted for presentation
+- User requests analysis in document form
+
 When to chat normally:
 - User asks for explanations or interpretations
 - User wants to discuss results from knowledgegraph queries
 - User needs help understanding results
 
-Be conversational and helpful. If you're not sure whether to query the knowledgegraph, ask the user for clarification."""
+Be conversational and helpful. If you're not sure whether to query the knowledgegraph or generate a report, ask the user for clarification."""
 
         function_tools = self._get_function_definitions()
 
@@ -233,10 +289,71 @@ Important rules:
            
             return "No data collected"
     
-    def _handle_function_call(self, function_name, arguments,neo4j_client,executed_queries):
+    def _handle_generate_report(self, arguments, neo4j_client, executed_queries):
+        """Handle the generate_report function call."""
+        report_title = arguments.get("report_title", "Knowledgegraph Report")
+        user_question = arguments.get("user_question", "")
+        context = arguments.get("context", "")
+        
+        try:
+            # First, query the knowledgegraph to get data for the report
+            query_args = {"user_question": user_question, "context": context}
+            data_result = self._handle_query_knowledgegraph(query_args, neo4j_client, executed_queries)
+            
+            # Parse the JSON data from the query result
+            try:
+                if isinstance(data_result, str):
+                    data = json.loads(data_result)
+                else:
+                    data = data_result
+            except json.JSONDecodeError:
+                data = []
+                print(f"Could not parse query result as JSON: {data_result}")
+            
+            # Generate the report
+            typst_file, pdf_file = self.report_generator.generate_report(
+                title=report_title,
+                data=data,
+                user_question=user_question,
+                context=context
+            )
+            
+            # Clean up old reports
+            self.report_generator.cleanup_old_reports(max_age_hours=24)
+            
+            # Return file paths for the UI to handle
+            result = {
+                "typst_file": typst_file,
+                "pdf_file": pdf_file,
+                "title": report_title,
+                "records_count": len(data) if data else 0
+            }
+            
+            return json.dumps(result)
+            
+        except Exception as e:
+            print(f"Error generating report: {e}")
+            error_result = {
+                "error": str(e),
+                "title": report_title
+            }
+            return json.dumps(error_result)
+    
+    def _handle_function_call(self, function_name, arguments, neo4j_client, executed_queries, generated_reports=None):
         """Route function calls to appropriate handlers."""
         if function_name == "query_knowledgegraph":
             return self._handle_query_knowledgegraph(arguments,neo4j_client,executed_queries)
+        elif function_name == "generate_report":
+            result = self._handle_generate_report(arguments,neo4j_client,executed_queries)
+            # Track generated reports
+            if generated_reports is not None:
+                try:
+                    report_data = json.loads(result)
+                    if "error" not in report_data:
+                        generated_reports.append(report_data)
+                except json.JSONDecodeError:
+                    pass
+            return result
         else:
             raise ValueError(f"Unknown function: {function_name}")
     
@@ -250,9 +367,10 @@ Important rules:
             thread_id (str, optional): Existing thread ID to continue conversation
             
         Returns:
-            dict: Response containing message, any query results, and thread_id
+            dict: Response containing message, any query results, generated reports, and thread_id
         """
         executed_queries = []
+        generated_reports = []
         
         try:
             # Create or use existing thread
@@ -288,7 +406,7 @@ Important rules:
                         print(f"Function called: {function_name} with args: {arguments}")
                         
                         try:
-                            result = self._handle_function_call(function_name, arguments,neo4j_client,executed_queries)
+                            result = self._handle_function_call(function_name, arguments, neo4j_client, executed_queries, generated_reports)
                             tool_outputs.append({
                                 "tool_call_id": tool_call.id,
                                 "output": str(result)
@@ -325,6 +443,7 @@ Important rules:
                 "message": response_text,
                 "thread_id": thread.id,
                 "executed_queries": executed_queries,
+                "generated_reports": generated_reports,
                 "status": "success"
             }
             
