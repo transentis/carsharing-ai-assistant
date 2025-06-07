@@ -1,6 +1,10 @@
 # Knowledgegraph AI Assistant
 
-An AI-powered conversational assistant for enterprise process knowledgegraphs, built with Streamlit and integrated with Neo4j and OpenAI.
+An AI-powered conversational assistant for knowledgegraphs containing information about the structures and processes of an enterprise.
+
+This is a simple demo app, built with Streamlit and integrated with Neo4j and OpenAI.
+
+Most of the code was written by Claude Code, with a little prompting from Oliver Grasl.
 
 ## Features
 
