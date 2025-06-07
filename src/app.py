@@ -34,8 +34,12 @@ def main():
     
     # User input - always at the bottom
     if prompt := st.chat_input("Ask about your knowledgegraph data or chat about enterprise processes..."):
-        # Add user message to chat history
+        # Add user message to chat history and display immediately
         st.session_state.messages.append({"role": "user", "content": prompt})
+        
+        # Display user message immediately
+        with st.chat_message("user"):
+            st.write(prompt)
         
         # Generate response using unified chat method
         with st.spinner("Processing your request..."):
