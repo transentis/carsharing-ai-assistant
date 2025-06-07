@@ -28,26 +28,75 @@ An AI-powered conversational assistant for car sharing services, built with Stre
    pip install -r requirements.txt
    ```
 
-4. Set up your OpenAI Assistant:
-   - Go to the [OpenAI platform](https://platform.openai.com/assistants)
-   - Create a new assistant focused on car sharing and Cypher queries
-   - Make sure the assistant has knowledge of Neo4j and the car sharing domain
-   - Copy the Assistant ID for the next step
-
-5. Configure environment variables:
+4. Configure environment variables:
    - Copy `src/.env-example` to `src/.env`
    - Update with your Neo4j Aura credentials
    - Add your OpenAI API key
-   - Add your OpenAI Assistant ID
+   - The OpenAI Assistant will be created automatically when the app starts
 
-6. Run the application:
+5. Run the application:
    ```
    streamlit run src/app.py
    ```
 
 ## Database
 
-The schema and data for an initial load of the database may be found in the respectivate directories. Loading the data is a manual process.
+The schema and data for an initial load of the database may be found in the data directory. 
+
+### Data Import
+
+To import the CSV data into your Neo4j AuraDB:
+
+```bash
+just import-data
+```
+
+This will load all the carsharing process data including departments, processes, systems, roles, and their relationships.
+
+### Cypher Query Examples
+
+Here are some useful Cypher queries for exploring the data:
+
+#### Load all nodes and relationships (including isolated nodes)
+```cypher
+MATCH (n)
+OPTIONAL MATCH (n)-[r]->(m)
+RETURN n, r, m
+```
+
+#### Get all processes
+```cypher
+MATCH (p:process)
+RETURN p.name, p.description
+```
+
+#### Get all systems that support the 'Car Rental' process
+```cypher
+MATCH (p:process {name: 'Car Rental'})-[:has_step]->(s:step)<-[:supports]-(sys:system)
+RETURN DISTINCT sys.name, sys.category, sys.description
+```
+
+#### Find which department owns each process
+```cypher
+MATCH (d:department)-[:is_owner_of]->(p:process)
+RETURN d.name as department, p.name as process
+```
+
+#### Get all roles that perform steps in a specific process
+```cypher
+MATCH (p:process {name: 'Car Rental'})-[:has_step]->(s:step)<-[:performs]-(r:role)
+RETURN r.name as role, s.step as step_name
+```
+
+#### Find the complete workflow for a process
+```cypher
+MATCH (d:department)-[:is_owner_of]->(p:process {name: 'Car Rental'})-[:has_step]->(s:step)
+OPTIONAL MATCH (r:role)-[:performs]->(s)
+OPTIONAL MATCH (sys:system)-[:supports]->(s)
+RETURN d.name as department, p.name as process, s.step as step, 
+       r.name as role, sys.name as system
+ORDER BY s.step
+```
 
 
 ## How It Works
