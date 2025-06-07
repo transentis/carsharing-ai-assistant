@@ -26,58 +26,63 @@ def main():
         st.info("Please check your API keys and knowledgegraph credentials in the .env file")
         return
     
-    # Display chat interface
-    with st.container():
-        # Display chat messages
-        for message in st.session_state.messages:
-            with st.chat_message(message["role"]):
-                st.write(message["content"])
+    # Display chat messages
+    for message in st.session_state.messages:
+        with st.chat_message(message["role"]):
+            st.write(message["content"])
+    
+    # User input - always at the bottom
+    if prompt := st.chat_input("Ask about your knowledgegraph data or chat about enterprise processes..."):
+        # Add user message to chat history
+        st.session_state.messages.append({"role": "user", "content": prompt})
         
-        # User input
-        if prompt := st.chat_input("Ask about your knowledgegraph data or chat about enterprise processes..."):
-            # Add user message to chat history
-            st.session_state.messages.append({"role": "user", "content": prompt})
+        # Generate response using unified chat method
+        with st.spinner("Processing your request..."):
+            # Use the new chat method that handles both conversation and knowledgegraph queries
+            response_data = st.session_state.openai_agent.chat_with_knowledgegraph(
+                user_message=prompt,
+                neo4j_client=st.session_state.neo4j_client,
+                thread_id=st.session_state.thread_id
+            )
             
-            # Display user message
-            with st.chat_message("user"):
-                st.write(prompt)
+            # Update thread ID for conversation continuity
+            st.session_state.thread_id = response_data.get("thread_id")
             
-            # Generate response using unified chat method
-            with st.chat_message("assistant"):
-                with st.spinner("Processing your request..."):
-                    # Use the new chat method that handles both conversation and knowledgegraph queries
-                    response_data = st.session_state.openai_agent.chat_with_knowledgegraph(
-                        user_message=prompt,
-                        neo4j_client=st.session_state.neo4j_client,
-                        thread_id=st.session_state.thread_id
-                    )
-                    
-                    # Update thread ID for conversation continuity
-                    st.session_state.thread_id = response_data.get("thread_id")
-                    
-                    # Display the assistant's response
-                    assistant_response = response_data.get("message", "I'm sorry, I couldn't process your request.")
-                    st.write(assistant_response)
-                    
-                    # Show executed queries if any
-                    executed_queries = response_data.get("executed_queries", [])
-                    if executed_queries:
-                        with st.expander(f"Knowledgegraph Queries Executed ({len(executed_queries)})"):
-                            for i, query_data in enumerate(executed_queries):
-                                st.write(f"**Query {i+1}:**")
-                                st.code(query_data["query"], language="cypher")
-                                st.write("**Results:**")
-                                st.json(query_data["results"])
-                                if i < len(executed_queries) - 1:
-                                    st.divider()
-                    
-                    # Show error information if there was an issue
-                    if response_data.get("status") == "error":
-                        with st.expander("Error Details"):
-                            st.error(response_data.get("error", "Unknown error occurred"))
+            # Get the assistant's response
+            assistant_response = response_data.get("message", "I'm sorry, I couldn't process your request.")
             
             # Add assistant response to chat history
             st.session_state.messages.append({"role": "assistant", "content": assistant_response})
+            
+            # Store executed queries and errors for display
+            executed_queries = response_data.get("executed_queries", [])
+            if executed_queries:
+                st.session_state.last_executed_queries = executed_queries
+            
+            if response_data.get("status") == "error":
+                st.session_state.last_error = response_data.get("error", "Unknown error occurred")
+        
+        # Rerun to refresh the display with new messages
+        st.rerun()
+    
+    # Display executed queries and errors after the chat messages (if any from the last interaction)
+    if hasattr(st.session_state, 'last_executed_queries') and st.session_state.last_executed_queries:
+        with st.expander(f"Knowledgegraph Queries Executed ({len(st.session_state.last_executed_queries)})"):
+            for i, query_data in enumerate(st.session_state.last_executed_queries):
+                st.write(f"**Query {i+1}:**")
+                st.code(query_data["query"], language="cypher")
+                st.write("**Results:**")
+                st.json(query_data["results"])
+                if i < len(st.session_state.last_executed_queries) - 1:
+                    st.divider()
+        # Clear after displaying
+        st.session_state.last_executed_queries = []
+    
+    if hasattr(st.session_state, 'last_error') and st.session_state.last_error:
+        with st.expander("Error Details"):
+            st.error(st.session_state.last_error)
+        # Clear after displaying
+        st.session_state.last_error = None
 
 if __name__ == "__main__":
     main()
