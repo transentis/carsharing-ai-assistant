@@ -1,6 +1,6 @@
-# Knowledgegraph AI Assistant
+# Knowledge Graph AI Assistant
 
-An AI-powered conversational assistant for knowledgegraphs containing information about the structures and processes of an enterprise.
+An AI-powered conversational assistant for knowledge graphs containing information about the structures and processes of an enterprise.
 
 This is a simple demo app, built with Streamlit and integrated with Neo4j and OpenAI.
 
@@ -10,9 +10,9 @@ Most of the code was written by Claude Code, with a little prompting from Oliver
 
 - Natural language conversational interface
 - Custom OpenAI Assistant for generating Cypher queries
-- Neo4j knowledgegraph integration for enterprise process data
+- Neo4j knowledge graph integration for enterprise process data
 - Streamlit web interface with interactive chat
-- **Report generation**: Generate professional PDF reports from knowledgegraph data using Typst markup language
+- **Report generation**: Generate professional PDF reports from knowledge graph data using Typst markup language
 
 ## Setup
 

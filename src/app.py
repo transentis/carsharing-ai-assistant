@@ -14,7 +14,7 @@ def initialize_session_state():
         st.session_state.thread_id = None
 
 def main():
-    st.title("Knowledgegraph AI Assistant")
+    st.title("Knowledge Graph AI Assistant")
     
     # Initialize session state and verify connections
     try:
@@ -37,7 +37,7 @@ def main():
                 # Show executed queries if any
                 executed_queries = message.get("executed_queries", [])
                 if executed_queries:
-                    with st.expander(f"Knowledgegraph Queries Executed ({len(executed_queries)})"):
+                    with st.expander(f"Knowledge Graph Queries Executed ({len(executed_queries)})"):
                         for j, query_data in enumerate(executed_queries):
                             st.write(f"**Query {j+1}:**")
                             st.code(query_data["query"], language="cypher")
