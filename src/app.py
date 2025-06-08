@@ -61,10 +61,11 @@ def main():
                                 with col1:
                                     with open(report['typst_file'], 'r') as f:
                                         typst_content = f.read()
+                                    typst_filename = os.path.basename(report['typst_file'])
                                     st.download_button(
                                         label="📄 Download Typst Source",
                                         data=typst_content,
-                                        file_name=f"report_{i}_{j+1}.typ",
+                                        file_name=typst_filename,
                                         mime="text/plain",
                                         key=f"typst_{i}_{j}"
                                     )
@@ -74,10 +75,11 @@ def main():
                                 with col2:
                                     with open(report['pdf_file'], 'rb') as f:
                                         pdf_content = f.read()
+                                    pdf_filename = os.path.basename(report['pdf_file'])
                                     st.download_button(
                                         label="📋 Download PDF Report",
                                         data=pdf_content,
-                                        file_name=f"report_{i}_{j+1}.pdf",
+                                        file_name=pdf_filename,
                                         mime="application/pdf",
                                         key=f"pdf_{i}_{j}"
                                     )

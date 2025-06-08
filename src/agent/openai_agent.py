@@ -4,6 +4,7 @@ import time
 import signal
 import atexit
 import threading
+import re
 from openai import OpenAI
 from dotenv import load_dotenv
 from utils.report_generator import TypstReportGenerator
@@ -341,6 +342,38 @@ Important rules:
             error_message = f"❌ Failed to generate report '{report_title}': {str(e)}"
             return error_message, error_result
     
+    def _fix_sandbox_links(self, response_text, generated_reports):
+        """
+        Replace sandbox file links in assistant responses with proper download information.
+        """
+        # Pattern to match sandbox file links (common patterns OpenAI uses)
+        sandbox_patterns = [
+            r'sandbox:/[^\s]+\.pdf',
+            r'sandbox:/[^\s]+\.typ',
+            r'/mnt/data/[^\s]+\.pdf',
+            r'/mnt/data/[^\s]+\.typ',
+            r'file-[a-zA-Z0-9]+-[a-zA-Z0-9]+',
+        ]
+        
+        modified_text = response_text
+        
+        # Check if we have any generated reports to reference
+        if generated_reports:
+            latest_report = generated_reports[-1]  # Get the most recent report
+            report_title = latest_report.get('title', 'Report')
+            
+            # Replace sandbox links with user-friendly message
+            for pattern in sandbox_patterns:
+                if re.search(pattern, modified_text):
+                    replacement = f"The {report_title} files are available for download in the interface below."
+                    modified_text = re.sub(pattern, replacement, modified_text)
+        
+        # Also remove any remaining sandbox references that might confuse users
+        modified_text = re.sub(r'sandbox:[^\s]*', 'the generated files', modified_text)
+        modified_text = re.sub(r'/mnt/data/[^\s]*', 'the generated files', modified_text)
+        
+        return modified_text
+
     def _handle_function_call(self, function_name, arguments, neo4j_client, executed_queries, generated_reports=None):
         """Route function calls to appropriate handlers."""
         if function_name == "query_knowledgegraph":
@@ -437,6 +470,9 @@ Important rules:
             assistant_message = messages.data[0]
             
             response_text = assistant_message.content[0].text.value
+            
+            # Fix any sandbox file links in the response
+            response_text = self._fix_sandbox_links(response_text, generated_reports)
             
             return {
                 "message": response_text,

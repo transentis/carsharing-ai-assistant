@@ -38,37 +38,63 @@ class CSVImporter:
             raise
     
     def clear_database(self):
-        """Clear all nodes and relationships"""
+        """Clear all nodes, relationships, and constraints"""
+        # Clear all nodes and relationships
         query = "MATCH (n) DETACH DELETE n"
         try:
             self.client.execute_query(query)
-            print("✅ Database cleared successfully")
+            print("✅ Database data cleared successfully")
         except Exception as e:
-            print(f"❌ Failed to clear database: {e}")
+            print(f"❌ Failed to clear database data: {e}")
+            raise
+        
+        # Clear all constraints
+        try:
+            # Get all constraints
+            constraints_query = "SHOW CONSTRAINTS"
+            constraints_result = self.client.execute_query(constraints_query)
+            
+            constraint_count = 0
+            for constraint in constraints_result:
+                constraint_name = constraint.get('name')
+                if constraint_name:
+                    try:
+                        drop_query = f"DROP CONSTRAINT {constraint_name}"
+                        self.client.execute_query(drop_query)
+                        constraint_count += 1
+                    except Exception as e:
+                        print(f"⚠️  Warning: Could not drop constraint {constraint_name}: {e}")
+            
+            print(f"✅ {constraint_count} constraints cleared successfully")
+        except Exception as e:
+            print(f"❌ Failed to clear constraints: {e}")
             raise
     
     def create_constraints(self):
-        """Create unique constraints for entity IDs"""
-        constraints = [
-            "CREATE CONSTRAINT department_name IF NOT EXISTS FOR (d:department) REQUIRE d.name IS UNIQUE",
-            "CREATE CONSTRAINT process_name IF NOT EXISTS FOR (p:process) REQUIRE p.name IS UNIQUE",
-            "CREATE CONSTRAINT system_name IF NOT EXISTS FOR (s:system) REQUIRE s.name IS UNIQUE",
-            "CREATE CONSTRAINT role_name IF NOT EXISTS FOR (r:role) REQUIRE r.name IS UNIQUE",
-            "CREATE CONSTRAINT step_id IF NOT EXISTS FOR (st:step) REQUIRE st.id IS UNIQUE"
+        """Create NODE KEY constraints for entity IDs (provides uniqueness + Bloom optimization)"""
+        # Key constraints for Neo4j Bloom (makes name field primary in display and provides uniqueness)
+        key_constraints = [
+            "CREATE CONSTRAINT department_key IF NOT EXISTS FOR (d:department) REQUIRE d.name IS NODE KEY",
+            "CREATE CONSTRAINT process_key IF NOT EXISTS FOR (p:process) REQUIRE p.name IS NODE KEY",
+            "CREATE CONSTRAINT system_key IF NOT EXISTS FOR (s:system) REQUIRE s.name IS NODE KEY", 
+            "CREATE CONSTRAINT role_key IF NOT EXISTS FOR (r:role) REQUIRE r.name IS NODE KEY",
+            "CREATE CONSTRAINT step_key IF NOT EXISTS FOR (st:step) REQUIRE st.name IS NODE KEY"
         ]
         
         constraint_count = 0
-        for constraint in constraints:
+        
+        # Create key constraints (these provide both uniqueness and Bloom benefits)
+        for key_constraint in key_constraints:
             try:
-                self.client.execute_query(constraint)
+                self.client.execute_query(key_constraint)
                 constraint_count += 1
             except Exception as e:
                 if "equivalent constraint already exists" not in str(e).lower():
-                    print(f"⚠️  Warning: Could not create constraint: {e}")
+                    print(f"⚠️  Warning: Could not create key constraint: {e}")
                 else:
                     constraint_count += 1
         
-        print(f"✅ {constraint_count}/{len(constraints)} constraints created successfully")
+        print(f"✅ {constraint_count}/{len(key_constraints)} NODE KEY constraints created successfully")
     
     def import_departments(self):
         """Import departments from CSV"""
@@ -145,9 +171,7 @@ class CSVImporter:
         query = f"""
         LOAD CSV WITH HEADERS FROM '{file_path}' AS row
         CREATE (st:step {{
-            id: row.Process + '_' + row.Step,
-            process: row.Process,
-            step: row.Step,
+            name: row.Step,
             description: row.Description
         }})
         """
@@ -180,7 +204,7 @@ class CSVImporter:
         query = f"""
         LOAD CSV WITH HEADERS FROM '{file_path}' AS row
         MATCH (p:process {{name: row.Process}})
-        MATCH (st:step {{id: row.Process + '_' + row.Step}})
+        MATCH (st:step {{name: row.Step}})
         CREATE (p)-[:has_step]->(st)
         """
         try:
@@ -196,7 +220,7 @@ class CSVImporter:
         query = f"""
         LOAD CSV WITH HEADERS FROM '{file_path}' AS row
         MATCH (r:role {{name: row.Role}})
-        MATCH (st:step {{step: row.Step}})
+        MATCH (st:step {{name: row.Step}})
         CREATE (r)-[:performs]->(st)
         """
         try:
@@ -211,7 +235,7 @@ class CSVImporter:
         file_path = f"{self.base_url}/step_system.csv"
         query = f"""
         LOAD CSV WITH HEADERS FROM '{file_path}' AS row
-        MATCH (st:step {{step: row.Step}})
+        MATCH (st:step {{name: row.Step}})
         MATCH (s:system {{name: row.System}})
         CREATE (s)-[:supports]->(st)
         """
