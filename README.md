@@ -197,11 +197,10 @@ RETURN d.name AS Department, p.name AS Process, s.name AS Step, r.name AS Role, 
 
 ### Show the schema
 
-- list all nodes and relationships in the knowledgegraph
+- "Which nodes and relationships do you know about related to our knowledge graph?"
 
 ### Querying data
 
-- "Fetch all the data from the knowledgegraph,both nodes and relationships"
 - "List all processes in the knowledgegraph"
 - "Create a table of all workflows in the knowledge graph, showing every department, the processes a department is owner of, all steps for each of the processes, the role performing the step, and the system supporting the step"
 - "Which Systems support the Car Rental process?"
@@ -214,6 +213,7 @@ RETURN d.name AS Department, p.name AS Process, s.name AS Step, r.name AS Role, 
 - "Given those processes, which other processes would you expect a car sharing enterprise to have?"
 - "List all systems in the knowledge graph"
 - "Given the list of systems, please identify those systems that could be consolidated?"
+- "Which processes are at risk if the Mobile Application Plattform fails?"
 
 ## Example Report Prompts
 
