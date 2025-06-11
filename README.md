@@ -205,6 +205,7 @@ RETURN d.name AS Department, p.name AS Process, s.name AS Step, r.name AS Role, 
 - "List all processes in the knowledgegraph"
 - "Create a table of all workflows in the knowledge graph, showing every department, the processes a department is owner of, all steps for each of the processes, the role performing the step, and the system supporting the step"
 - "Which Systems support the Car Rental process?"
+- "Which departments don't own a process?"
 
 
 ### Summarizing and reasoning about data in the knowledge graph

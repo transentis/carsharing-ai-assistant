@@ -55,20 +55,8 @@ class OpenAIAgent:
             except Exception as e:
                 print(f"Error deleting assistant: {e}")
     
-    def _load_schema(self):
-        """Load the knowledgegraph schema from the schema directory."""
-        schema_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'schema', 'car_sharing_meta_graph.json')
-        try:
-            with open(schema_path, 'r') as f:
-                return json.load(f)
-        except FileNotFoundError:
-            print(f"Schema file not found at {schema_path}")
-            return None
-    
     def _get_function_definitions(self):
         """Define the functions available to the assistant."""
-        schema = self._load_schema()
-        schema_text = json.dumps(schema, indent=2) if schema else "Schema not available"
         
         return [
             {
@@ -134,8 +122,7 @@ class OpenAIAgent:
             print(f"Error listing assistants: {e}")
         
         # If no existing assistant found, create a new one
-        schema = self._load_schema()
-        schema_text = json.dumps(schema, indent=2) if schema else "Schema not available"
+       
         
         instructions = f"""You are a knowledgegraph AI assistant that can help with both general conversation and knowledgegraph operations.
 

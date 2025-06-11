@@ -14,6 +14,8 @@ def initialize_session_state():
         st.session_state.thread_id = None
 
 def main():
+    
+    st.set_page_config(page_title="Knowledge Graph AI Assistant")
     st.title("Knowledge Graph AI Assistant")
     
     # Initialize session state and verify connections
