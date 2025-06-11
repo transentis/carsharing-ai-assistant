@@ -168,6 +168,52 @@ For report generation:
 3. A professional PDF report is generated and made available for download
 4. Both the source Typst file and compiled PDF are provided
 
+## Example Cypher Queries
+
+List all processes
+
+```cypher
+MATCH (p:process) RETURN p.name, p.description
+```
+
+All systems supporting the Car Rental process
+
+```cypher
+MATCH (p:process {name: 'Car Rental'})-[:has_step]->(s:step)<-[:supports]-(sys:system)
+RETURN sys.name
+```
+
+Table of all workflows
+
+```cypher
+MATCH (d:department)-[:is_owner_of]->(p:process)
+OPTIONAL MATCH (p)-[:has_step]->(s:step)
+OPTIONAL MATCH (r:role)-[:performs]->(s)
+OPTIONAL MATCH (sys:system)-[:supports]->(s)
+RETURN d.name AS Department, p.name AS Process, s.name AS Step, r.name AS Role, sys.name AS System
+```
+
+## Example Knowledge Graph Prompts
+
+### Show the schema
+
+- list all nodes and relationships in the knowledgegraph
+
+### Querying data
+
+- "Fetch all the data from the knowledgegraph,both nodes and relationships"
+- "List all processes in the knowledgegraph"
+- "Create a table of all workflows in the knowledge graph, showing every department, the processes a department is owner of, all steps for each of the processes, the role performing the step, and the system supporting the step"
+- "Which Systems support the Car Rental process?"
+
+
+### Summarizing and reasoning about data in the knowledge graph
+
+- "Summarize all processes in the knowledge graph"
+- "Given those processes, which other processes would you expect a car sharing enterprise to have?"
+- "List all systems in the knowledge graph"
+- "Given the list of systems, please identify those systems that could be consolidated?"
+
 ## Example Report Prompts
 
 Try these prompts to generate professional reports from your knowledgegraph:
@@ -177,7 +223,8 @@ Try these prompts to generate professional reports from your knowledgegraph:
 - "I need a formatted summary of all roles and their responsibilities"
 - "Generate a report about all processes and their departments"
 - "Create a document listing all systems that support the 'Car Rental' process"
-- "I want a report showing the complete workflow for each process"
+- "Create a report showing each process, the steps of each process and the description of each step."
+- "Generate a report with a table of all workflows in the knowledge graph, showing every department, the processes a department is owner of, all steps for each of the processes, the role performing the step, and the system supporting the step"
 
 ## Ideas for Extension
 
