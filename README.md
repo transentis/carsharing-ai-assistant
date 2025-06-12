@@ -170,6 +170,12 @@ For report generation:
 
 ## Example Cypher Queries
 
+Show the schema
+
+```cypher
+call apoc.meta.graph
+```
+
 List all processes
 
 ```cypher
